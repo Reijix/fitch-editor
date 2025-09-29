@@ -1,0 +1,34 @@
+cabal-version:      3.0
+name:               app
+version:            0.1.0.0
+synopsis:           TODO
+description:        TODO
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Reijix
+maintainer:         Reijix
+copyright:          Leon Vatthauer @ 2025
+category:           Web
+build-type:         Simple
+
+common warnings
+  ghc-options:
+    -funbox-strict-fields -O2 -ferror-spans -fspecialise-aggressively -Wall
+
+common wasm
+  if arch(wasm32)
+    ghc-options:
+      -no-hs-main -optl-mexec-model=reactor "-optl-Wl,--export=hs_start"
+    cpp-options:
+      -DWASM
+
+executable app
+  import:
+    wasm, warnings
+  main-is:
+    Main.hs
+  build-depends: base < 5, containers >= 0.7, miso
+  hs-source-dirs:
+    app
+  default-language:
+    Haskell2010
