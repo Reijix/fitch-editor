@@ -24,7 +24,7 @@ common wasm
 
 executable app
   import:
-    wasm, warnings
+    -- wasm, warnings
   main-is:
     Main.hs
   build-depends: base < 5, containers >= 0.7, miso, mtl

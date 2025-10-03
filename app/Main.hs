@@ -36,6 +36,7 @@ import Miso.Lens (Lens, lens, this, use, (.=), (^.))
 import Miso.Svg (text_, tspan_)
 import qualified Miso.Svg.Element as S
 import qualified Miso.Svg.Property as SP
+import qualified Data.List as L
 
 -----------------------------------------------------------------------------
 #if WASM
@@ -58,23 +59,23 @@ app =
 
 -----------------------------------------------------------------------------
 emptyModel :: Model
-emptyModel = Model {_x = 0.0, _y = 0.0, _active = False}
+emptyModel = Model {_cursor_x = 0.0, _cursor_y = 0.0, _active = False, _proof = EMPTYP}
 
 -----------------------------------------------------------------------------
 updateModel :: Action -> Effect ROOT Model Action -- TODO is ROOT correct??
 -- updateModel (HandlePointer pointer) = this .= client pointer
 updateModel (HandlePointer pointer) =
-  use active >>= \a ->
+  Miso.Lens.use active >>= \a ->
     when
       a
       ( do
           let (x, y) = client pointer
-          curr_x .= x
-          curr_y .= y
+          cursor_x Miso.Lens..= x
+          cursor_y Miso.Lens..= y
           io_ $ do consoleLog "pointer"
       )
-updateModel (PointerDown _) = active .= True
-updateModel (PointerUp _) = active .= False
+updateModel (PointerDown _) = active Miso.Lens..= True
+updateModel (PointerUp _) = active Miso.Lens..= False
 
 -----------------------------------------------------------------------------
 data Action
@@ -84,24 +85,32 @@ data Action
   deriving (Show, Eq)
 
 -----------------------------------------------------------------------------
-data Model = Model {_x :: Double, _y :: Double, _active :: Bool} deriving (Eq)
+data Model = Model
+  { _cursor_x :: Double
+  , _cursor_y :: Double
+  , _active :: Bool
+  , _proof :: Proof
+  } deriving (Eq)
 
-active :: Lens Model Bool
-active = lens _active $ \model n -> model {_active = n}
+active :: Miso.Lens.Lens Model Bool
+active = Miso.Lens.lens _active $ \model a -> model {_active = a}
 
-curr_x :: Lens Model Double
-curr_x = lens _x $ \model n -> model {_x = n}
+cursor_x :: Miso.Lens.Lens Model Double
+cursor_x = Miso.Lens.lens _cursor_x $ \model x -> model {_cursor_x = x}
 
-curr_y :: Lens Model Double
-curr_y = lens _y $ \model n -> model {_y = n}
+cursor_y :: Miso.Lens.Lens Model Double
+cursor_y = Miso.Lens.lens _cursor_y $ \model y -> model {_cursor_y = y}
 
-data Formula = Formula -- TODO
+proof :: Miso.Lens.Lens Model Proof
+proof = Miso.Lens.lens _proof $ \model p -> model {_proof = p}
 
-data Rule = Rule -- TODO
+data Formula = Formula deriving Eq -- TODO
 
-data Line = Line Formula Rule
+data Rule = Rule deriving Eq -- TODO
 
-data Proof = ProofLine Line | SubProof [Formula] [Proof] Line
+data Line = Line Formula Rule deriving Eq
+
+data Proof = EMPTYP | ProofLine Line | SubProof [Formula] [Proof] Line deriving Eq
 
 -- disable text-highlighting during drag and drop. `preventDefault`
 onPD :: (PointerEvent -> Action) -> Attribute Action
@@ -113,11 +122,38 @@ onPD f =
     (\action _ -> f action)
 
 -----------------------------------------------------------------------------
-viewLine :: MisoString -> Line -> View Model Action
-viewLine dy (Line _ _) = text_ [ SP.x_ "50", SP.y_ "50", SP.dy_ dy ] [tspan_ [ ] ["FORMULA"], tspan_ [ SP.dx_ "30px" ] ["RULE"]]
+toEm :: Int -> MisoString
+toEm n = ms (show n ++ "em")
+viewLine :: Int -> Line -> View Model Action
+viewLine dy (Line _ _) = text_ [ SP.x_ "50", SP.y_ "50", SP.dy_ $ toEm dy ] [tspan_ [ ] ["FORMULA"], tspan_ [ SP.dx_ "30px" ] ["RULE"]]
+
+viewRule :: Int -> Rule -> View Model Action
+viewRule dy _ = text_ [ SP.x_ "50", SP.y_ "50", SP.dy_ $ toEm dy ] [ "RULE" ]
+
+viewFormula :: Int -> Formula -> View Model Action
+viewFormula dy _ = text_ [ SP.x_ "50", SP.y_ "50", SP.dy_ $ toEm dy ] [ "FORMULA" ]
+
+viewProof :: (Int, Int) -> Proof -> View Model Action
+viewProof (x,y) p = snd $ _viewProof 0 p
+  where 
+    _viewProof :: Int -> Proof -> (Int, View Model Action)
+    _viewProof _ EMPTYP = (0, S.g_ [] [])
+    _viewProof dy (ProofLine l) = (dy + 1, S.g_ [] [ viewLine dy l ])
+    _viewProof dy (SubProof fs ps l) = (dy + length allLines, S.g_ [] allLines)
+      where
+        allLines :: [View Model Action]
+        allLines = do
+          let (dy', fs') = L.mapAccumL (\acc f  -> (acc + 1, viewFormula acc f)) dy fs
+          let (dy'', ps') = L.mapAccumL (\acc p -> _viewProof acc p) dy' ps
+          fs' ++ ps' ++ [viewLine dy'' l]
+
+
+
+exProof :: Proof
+exProof = SubProof [Formula, Formula] [ProofLine (Line Formula Rule)] (Line Formula Rule)
 
 viewModel :: Model -> View Model Action
-viewModel (Model x y _) =
+viewModel (Model x y _ _) =
   H.div_
     [E.onPointerUp PointerUp]
     [ -- H.h1_ [] ["Fitch Editor"],
@@ -148,10 +184,13 @@ viewModel (Model x y _) =
                   SP.height_ "100px"
                 ]
             ],
-          S.g_
-            [onPD PointerDown]
-            [ viewLine "0em" (Line Formula Rule), viewLine "1em" (Line Formula Rule), viewLine "2em" (Line Formula Rule)
-            ]
+            S.g_
+              []
+              [viewProof (50, 50) exProof]
+          -- S.g_
+          --   [onPD PointerDown]
+          --   [ viewLine 0 (Line Formula Rule), viewLine "1em" (Line Formula Rule), viewLine "2em" (Line Formula Rule)
+          --   ]
         ]
     ]
 
