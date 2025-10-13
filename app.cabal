@@ -27,6 +27,8 @@ executable app
     -- wasm, warnings
   main-is:
     Main.hs
+  other-modules:
+    Syntax
   build-depends: base < 5, containers >= 0.7, miso, mtl
   hs-source-dirs:
     app

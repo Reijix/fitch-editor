@@ -38,13 +38,15 @@ module Syntax where
   data Line rule formula = Line formula (RuleSpec rule formula) deriving (Show, Eq)
 
   -- TODO add phantom proof/line, idea: Phantom Int (Int gives number of lines that are phantomed)
-  data Proof rule formula = ProofLine (Line rule formula) | SubProof [formula] [Proof rule formula] (Line rule formula) deriving (Show, Eq)
+  data Proof rule formula = PhantomProof Int | ProofLine (Line rule formula) | SubProof [formula] [Proof rule formula] (Line rule formula) deriving (Show, Eq)
 
   pLength :: Proof rule formula -> Int
+  pLength (PhantomProof n)   = n
   pLength (ProofLine l)      = 1
   pLength (SubProof fs ps _) = foldr (\p n -> pLength p + n) (L.length fs + 1) ps
 
   pLookup :: Proof rule formula -> Int -> Either (Line rule formula) formula
+  pLookup (PhantomProof _) _                      = error "Tried (!!) on PhantomProof"
   pLookup (ProofLine l) 0                         = Left l
   pLookup (ProofLine _) _                         = error "Tried (!!) on ProofLine with n > 0"
   pLookup (SubProof fs _ _) n | n < L.length fs   = Right $ fs L.!! n
@@ -69,6 +71,7 @@ module Syntax where
   viewProof n (x,y) p = snd $ _viewProof n 0 p
     where 
       _viewProof :: Int -> Int -> Proof rule formula -> (Int, View (Model rule formula) Action)
+      _viewProof n dy (PhantomProof m) = (n , S.g_ [] $ L.replicate m $ text_ [ SP.x_ $ ms x, SP.y_ $ ms y, SP.dy_ $ toEm dy ] [ "" ])
       _viewProof n dy (ProofLine l) = (dy + 1, viewLine n (x,y) dy l)
       _viewProof n dy (SubProof fs ps l) = (dy + length allLines, S.g_ [] allLines)
         where
