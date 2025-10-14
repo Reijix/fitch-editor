@@ -196,11 +196,11 @@
       },
       "locked": {
         "host": "gitlab.haskell.org",
-        "lastModified": 1756517100,
-        "narHash": "sha256-7zXo0dubfvyjKarkaRRa1oxC+mhTROb0S1fSI8okYYk=",
+        "lastModified": 1756685280,
+        "narHash": "sha256-XXi1OmL9SeS4a+dwtjr9waBf1rwQNRpi2RcBp4sNSTc=",
         "owner": "haskell-wasm",
         "repo": "ghc-wasm-meta",
-        "rev": "90725b12fb88efbad3357cace72ec77380e81a0c",
+        "rev": "a3d155c399021c8bf387f52c8f902f3c6633fb30",
         "type": "gitlab"
       },
       "original": {
@@ -561,17 +561,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1748063550,
-        "narHash": "sha256-xJ3BLiFtQmH92Y0jqIgdzJqidQHm3M1ZKHRAUEgNZF0=",
+        "lastModified": 1756701389,
+        "narHash": "sha256-WUXl+5QfhsZKf6V+h0qhl6Jgy6SzR3HzMQsfbWL0jkE=",
         "owner": "ghcjs",
         "repo": "jsaddle",
-        "rev": "2513cd19184376ac8a2f0e3797a1ae7d2e522e87",
+        "rev": "0fb7260ad02592546c9f180078d770256fb1f0f6",
         "type": "github"
       },
       "original": {
         "owner": "ghcjs",
         "repo": "jsaddle",
-        "rev": "2513cd19184376ac8a2f0e3797a1ae7d2e522e87",
+        "rev": "0fb7260ad02592546c9f180078d770256fb1f0f6",
         "type": "github"
       }
     },
@@ -584,11 +584,11 @@
         "servant": "servant"
       },
       "locked": {
-        "lastModified": 1756766941,
-        "narHash": "sha256-P/6krz8+/Y9OjCch+hgQw5xLBnR3lonqMpKsPRlg3T8=",
+        "lastModified": 1760332289,
+        "narHash": "sha256-ke1/gClB+VlfG+xTG8+L72/Nra8ThBYjvzBvvQyMYAo=",
         "owner": "dmjio",
         "repo": "miso",
-        "rev": "3c3c359af12d657cf78ace32db53b088b5b8b7a2",
+        "rev": "ed4bf1b5d82f27374bc692b549255cce9fe5f19d",
         "type": "github"
       },
       "original": {
