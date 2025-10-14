@@ -1,8 +1,9 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE ExistentialQuantification #-}
+
 -----------------------------------------------------------------------------
 module App (runApp) where
 
@@ -22,19 +23,22 @@ import Miso
     ms,
     run,
     startApp,
-    text
+    text,
   )
 import qualified Miso.CSS as CSS
 import qualified Miso.Html.Element as H
+import Miso.Html.Event as E (onPointerUp)
 import qualified Miso.Html.Property as HP
-import Miso.Html.Event as E
 import Miso.Lens (use, (.=))
 import Miso.Svg (text_)
 import qualified Miso.Svg.Element as S
 import qualified Miso.Svg.Property as SP
 import Syntax
+
 -----------------------------------------------------------------------------
-runApp :: forall rule formula . Eq formula => Eq rule => Show rule => Show formula => Model rule formula -> IO ()
+
+-- | Test of Haddock
+runApp :: forall rule formula. (Eq formula) => (Eq rule) => (Show rule) => (Show formula) => Model rule formula -> IO ()
 runApp emptyModel = run $ startApp app
   where
     app :: App (Model rule formula) Action
@@ -61,9 +65,10 @@ updateModel (PointerDown n _) = do
   io_ $ consoleLog $ ms n
   active Miso.Lens..= True
 updateModel (PointerUp _) = active Miso.Lens..= False
+
 -----------------------------------------------------------------------------
 
-viewModel :: forall rule formula . Show rule => Show formula => (Model rule formula) -> View (Model rule formula) Action
+viewModel :: forall rule formula. (Show rule) => (Show formula) => (Model rule formula) -> View (Model rule formula) Action
 viewModel (Model x y _ prf) =
   H.div_
     [E.onPointerUp PointerUp]
@@ -77,40 +82,40 @@ viewModel (Model x y _ prf) =
         ]
         -- TODO use foreignObject for lines, and then use onInput
         -- https://github.com/haskell-miso/miso-todomvc/blob/bc133d50971e18c137fbe3e2d0e05bc1a6b5c231/src/Main.hs#L310
-        [ S.foreignObject_ [ SP.height_ "1em", SP.width_ "5em", SP.x_ $ ms 200, SP.y_ $ ms 200 ] [ H.input_ [ HP.placeholder_ "asd" ] ],
+        [ S.foreignObject_ [SP.height_ "1em", SP.width_ "5em", SP.x_ $ ms 200, SP.y_ $ ms 200] [H.input_ [HP.placeholder_ "asd"]],
           text_
             [ SP.x_ $ ms (x - 50),
               SP.y_ $ ms (y - 52)
             ]
             [ text $ ms $ show (round x :: Integer, round y :: Integer)
             ],
-            S.g_ 
-              [] 
-              [ S.rect_ 
+          S.g_
+            []
+            [ S.rect_
                 [ SP.x_ "0",
                   SP.y_ "0",
-                  CSS.style_ [ CSS.fill "red" ],
+                  CSS.style_ [CSS.fill "red"],
                   SP.width_ "100px",
                   SP.height_ "33%"
                 ],
-                S.rect_ 
+              S.rect_
                 [ SP.x_ "0",
                   SP.y_ "33%",
-                  CSS.style_ [ CSS.fill "yellow" ],
+                  CSS.style_ [CSS.fill "yellow"],
                   SP.width_ "100px",
                   SP.height_ "33%"
                 ],
-                S.rect_ 
+              S.rect_
                 [ SP.x_ "0",
                   SP.y_ "66%",
-                  CSS.style_ [ CSS.fill "orange" ],
+                  CSS.style_ [CSS.fill "orange"],
                   SP.width_ "100px",
                   SP.height_ "33%"
                 ]
-              ],
-            S.g_
-              []
-              [viewProof 0 (100, 50) prf]
+            ],
+          S.g_
+            []
+            [viewProof 0 (100, 50) prf]
         ]
     ]
 
