@@ -67,7 +67,6 @@ updateModel (PointerDown n _) = do
 updateModel (PointerUp _) = active Miso.Lens..= False
 
 -----------------------------------------------------------------------------
-
 viewModel :: forall rule formula. (Show rule) => (Show formula) => (Model rule formula) -> View (Model rule formula) Action
 viewModel (Model x y _ prf) =
   H.div_
@@ -82,7 +81,7 @@ viewModel (Model x y _ prf) =
         ]
         -- TODO use foreignObject for lines, and then use onInput
         -- https://github.com/haskell-miso/miso-todomvc/blob/bc133d50971e18c137fbe3e2d0e05bc1a6b5c231/src/Main.hs#L310
-        [ S.foreignObject_ [SP.height_ "1em", SP.width_ "5em", SP.x_ $ ms 200, SP.y_ $ ms 200] [H.input_ [HP.placeholder_ "asd"]],
+        [ S.foreignObject_ [SP.height_ "1em", SP.width_ "5em", SP.x_ $ ms (200 :: Int), SP.y_ $ ms (200 :: Int)] [H.input_ [HP.placeholder_ "asd"]],
           text_
             [ SP.x_ $ ms (x - 50),
               SP.y_ $ ms (y - 52)

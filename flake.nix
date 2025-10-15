@@ -2,14 +2,19 @@
 
   inputs = {
     miso.url = "github:dmjio/miso";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = inputs:
-    inputs.miso.inputs.flake-utils.lib.eachDefaultSystem (system: {
-      devShell = inputs.miso.outputs.devShells.${system}.default;
-      devShells.wasm = inputs.miso.outputs.devShells.${system}.wasm;
-      devShells.ghcjs = inputs.miso.outputs.devShells.${system}.ghcjs;
-      devShells.hls = inputs.miso.outputs.devShells.${system}.hls;
+  outputs = {miso, self, nixpkgs, flake-utils }:
+      flake-utils.lib.eachDefaultSystem (system: {
+      # devShell = inputs.miso.outputs.devShells.${system}.default;
+      devShells.default = let 
+        pkgs = nixpkgs.legacyPackages.${system}; 
+      in import ./shell.nix { inherit pkgs system; };
+      devShells.wasm = miso.outputs.devShells.${system}.wasm;
+      devShells.ghcjs = miso.outputs.devShells.${system}.ghcjs;
+      devShells.hls = miso.outputs.devShells.${system}.hls;
     });
 
 }

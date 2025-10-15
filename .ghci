@@ -1,4 +1,2 @@
-:set prompt ">>> "
-:set prompt2 "... "
 :set -iapp
 :set -Wall
