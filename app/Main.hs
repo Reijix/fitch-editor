@@ -1,7 +1,3 @@
------------------------------------------------------------------------------
-{-# LANGUAGE CPP #-}
-
------------------------------------------------------------------------------
 module Main where
 
 import App
@@ -20,7 +16,7 @@ data Formula = Formula deriving (Show, Eq)
 
 -----------------------------------------------------------------------------
 emptyModel :: (Model Rule Formula)
-emptyModel = Model {_cursor_x = 50, _cursor_y = 52, _active = False, _proof = exProof}
+emptyModel = Model {_cursorX = 50, _cursorY = 52, _active = False, _proof = exProof}
 
 exProof :: (Proof Rule Formula)
 exProof = SubProof [Formula, Formula] [ProofLine (Line Formula $ RuleSpec Rule [] Formula)] (Line Formula $ RuleSpec Rule [] Formula)

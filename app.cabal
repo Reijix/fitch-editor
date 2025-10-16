@@ -38,6 +38,18 @@ executable app
   other-modules:
     App
     Syntax
+    Views
+
+  default-extensions:
+    CPP
+    DuplicateRecordFields
+    ExistentialQuantification
+    GADTs
+    NamedFieldPuns
+    NoFieldSelectors
+    OverloadedRecordDot
+    OverloadedStrings
+    ScopedTypeVariables
 
   build-depends:
     base <5,

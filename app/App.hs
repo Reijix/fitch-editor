@@ -1,10 +1,3 @@
------------------------------------------------------------------------------
-{-# LANGUAGE CPP #-}
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
------------------------------------------------------------------------------
 module App (runApp) where
 
 import Control.Monad (when)
@@ -34,6 +27,7 @@ import Miso.Svg (text_)
 import qualified Miso.Svg.Element as S
 import qualified Miso.Svg.Property as SP
 import Syntax
+import Views
 
 -----------------------------------------------------------------------------
 
@@ -57,8 +51,8 @@ updateModel (HandlePointer pointer) =
       a
       ( do
           let (x, y) = client pointer
-          cursor_x Miso.Lens..= x
-          cursor_y Miso.Lens..= y
+          cursorX Miso.Lens..= x
+          cursorY Miso.Lens..= y
           -- io_ $ do consoleLog "pointer"
       )
 updateModel (PointerDown n _) = do
@@ -67,11 +61,12 @@ updateModel (PointerDown n _) = do
 updateModel (PointerUp _) = active Miso.Lens..= False
 
 -----------------------------------------------------------------------------
-viewModel :: forall rule formula. (Show rule) => (Show formula) => (Model rule formula) -> View (Model rule formula) Action
+viewModel :: forall rule formula. (Show rule) => (Show formula) => Model rule formula -> View (Model rule formula) Action
 viewModel (Model x y _ prf) =
   H.div_
     [E.onPointerUp PointerUp]
-    [ -- H.h1_ [] ["Fitch Editor"],
+    [ H.p_ [] ["Test"], -- H.h1_ [] ["Fitch Editor"],
+    -- TODO viewBox instead of heigth and width!
       H.svg_
         [ CSS.style_
             [ CSS.borderStyle "solid",
