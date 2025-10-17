@@ -31,7 +31,14 @@ import Views
 -----------------------------------------------------------------------------
 
 -- | Test of Haddock
-runApp :: forall rule formula. (Eq formula) => (Eq rule) => (Show rule) => (Show formula) => Model rule formula -> IO ()
+runApp ::
+  forall formula rule.
+  (Eq formula) =>
+  (Show formula) =>
+  (Eq rule) =>
+  (Show rule) =>
+  Model rule formula ->
+  IO ()
 runApp emptyModel = run $ startApp app
   where
     app :: App (Model rule formula) Action
@@ -61,10 +68,17 @@ updateModel (PointerDown n _) = do
 updateModel (PointerUp _) = active Miso.Lens..= False
 
 -----------------------------------------------------------------------------
-viewModel :: forall rule formula. (Show rule) => (Show formula) => Model rule formula -> View (Model rule formula) Action
+viewModel ::
+  forall formula rule.
+  (Show formula) =>
+  (Show rule) =>
+  Model rule formula ->
+  View (Model rule formula) Action
 viewModel (Model x y _ prf) =
   H.div_
     [E.onPointerUp PointerUp]
-    [viewProof 0 (100, 50) prf]
+    [ H.p_ [] [text $ ms $ show (round x :: Integer, round y :: Integer)],
+      viewProof 0 (100, 50) prf
+    ]
 
 -----------------------------------------------------------------------------

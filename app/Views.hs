@@ -6,6 +6,7 @@ import Miso
     MisoString,
     PointerEvent,
     View,
+    emptyDecoder,
     ms,
     onWithOptions,
     pointerDecoder,
@@ -20,61 +21,15 @@ import qualified Miso.Svg.Element as S
 import qualified Miso.Svg.Property as SP
 import Syntax
 
-href_ :: MisoString -> Attribute action
-href_ = textProp "href"
+viewDragIcon :: View (Model formula rule) Action
+viewDragIcon = H.img_ [HP.src_ "draggable.svg", HP.height_ "16"]
 
--- TODO
-viewDragIcon :: (Int, Int) -> Int -> View (Model rule formula) Action
-viewDragIcon (x, y) dy = H.img_ [HP.src_ "draggable.svg", HP.height_ "16"]
+-----------------------------------------------------------------------------
+onDrop :: Action -> Attribute Action
+onDrop f = onWithOptions preventDefault "drop" emptyDecoder $ \_ _ -> f
 
--- VIEWS
--- TODO
-viewLine ::
-  forall rule formula.
-  (Show rule) =>
-  (Show formula) =>
-  Int -> (Int, Int) -> Int -> Line rule formula -> View (Model rule formula) Action
-viewLine n (x, y) dy (Line f r) =
-  H.p_
-    []
-    [viewDragIcon (x, y) dy, text $ ms (show f ++ show n), text $ ms (show r ++ show n)]
-
--- TODO
-viewRule ::
-  forall rule formula.
-  (Show rule) =>
-  (Show formula) =>
-  Int -> (Int, Int) -> Int -> RuleSpec rule formula -> View (Model rule formula) Action
-viewRule n (x, y) dy r = H.p_ [onPD (PointerDown n)] [text $ ms $ show r]
-
--- TODO
-viewFormula ::
-  forall rule formula.
-  (Show rule) =>
-  (Show formula) =>
-  Int -> (Int, Int) -> Int -> formula -> View (Model rule formula) Action
-viewFormula n (x, y) dy f = H.p_ [onPD (PointerDown n)] [viewDragIcon (x, y) dy, text $ ms $ show f]
-
--- TODO
-viewProof ::
-  forall rule formula.
-  (Show rule) =>
-  (Show formula) =>
-  Int -> (Int, Int) -> Proof rule formula -> View (Model rule formula) Action
-viewProof n (x, y) p = snd $ _viewProof n 0 p
-  where
-    _viewProof :: Int -> Int -> Proof rule formula -> (Int, View (Model rule formula) Action)
-    -- TODO empty lines
-    _viewProof n dy (PhantomProof m) = (n, H.div_ [] $ L.replicate m $ H.p_ [] [""])
-    -- TODO
-    _viewProof n dy (ProofLine l) = (dy + 1, viewLine n (x, y) dy l)
-    _viewProof n dy (SubProof fs ps l) = (dy + length allLines, H.div_ [] allLines)
-      where
-        allLines :: [View (Model rule formula) Action]
-        allLines = do
-          let (acc', fs') = L.mapAccumL (\acc f -> (acc + 1, viewFormula (n + acc) (x, y) (dy + acc) f)) 0 fs
-          let (acc'', ps') = L.mapAccumL (\acc p -> _viewProof (n + acc) (dy + acc) p) acc' ps
-          fs' ++ ps' ++ [viewLine (n + acc'') (x, y) (dy + acc'') l]
+onDragEnter :: Action -> Attribute Action
+onDragEnter f = onWithOptions preventDefault "dragEnter" emptyDecoder $ \_ _ -> f
 
 -- disable text-highlighting during drag and drop. `preventDefault`
 onPD :: (PointerEvent -> Action) -> Attribute Action
@@ -84,6 +39,54 @@ onPD f =
     "pointerdown"
     pointerDecoder
     (\action _ -> f action)
+
+-----------------------------------------------------------------------------
+-- onDragOver :: action -> Attribute action
+-- onDragOver = onDragOverWithOptions preventDefault
+
+-- -----------------------------------------------------------------------------
+-- onDragEnter :: action -> Attribute action
+-- onDragEnter = onDragEnterWithOptions preventDefault
+
+-- -----------------------------------------------------------------------------
+-- onDragLeave :: action -> Attribute action
+-- onDragLeave = onDragLeaveWithOptions preventDefault
+
+-----------------------------------------------------------------------------
+
+-- VIEWS
+lineContainer ::
+  forall formula rule.
+  (Show formula) =>
+  (Show rule) =>
+  MisoString -> View (Model formula rule) Action
+lineContainer s = H.p_ [HP.draggable_ True] [viewDragIcon, text s]
+
+viewLine ::
+  forall formula rule.
+  (Show formula) =>
+  (Show rule) =>
+  Int -> Either (Assumption formula) (Derivation formula rule) -> View (Model formula rule) Action
+viewLine n (Left f) = lineContainer $ ms $ show f ++ show n
+viewLine n (Right (Derivation f r _)) = lineContainer $ ms $ show f ++ show r ++ show n
+
+viewProof ::
+  forall formula rule.
+  (Show formula) =>
+  (Show rule) =>
+  Int -> (Int, Int) -> Proof formula rule -> View (Model formula rule) Action
+viewProof n (x, y) p = snd $ _viewProof n 0 p
+  where
+    _viewProof :: Int -> Int -> Proof formula rule -> (Int, View (Model formula rule) Action)
+    _viewProof n dy (PhantomProof m) = (n, H.div_ [] $ L.replicate m $ H.p_ [] [""])
+    _viewProof n dy (ProofLine d) = (dy + 1, viewLine n (Right d))
+    _viewProof n dy (SubProof fs ps d) = (dy + length allLines, H.div_ [] allLines)
+      where
+        allLines :: [View (Model formula rule) Action]
+        allLines = do
+          let (acc', fs') = L.mapAccumL (\acc f -> (acc + 1, viewLine (n + acc) (Left f))) 0 fs
+          let (acc'', ps') = L.mapAccumL (\acc p -> _viewProof (n + acc) (dy + acc) p) acc' ps
+          fs' ++ ps' ++ [viewLine (n + acc'') (Right d)]
 
 -----------------------------------------------------------------------------
 toEm :: Int -> MisoString
