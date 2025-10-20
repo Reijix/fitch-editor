@@ -57,18 +57,15 @@ data Derivation formula rule = Derivation formula rule [Reference] deriving (Sho
 
 -- TODO add phantom proof/line, idea: Phantom Int (Int gives number of lines that are phantomed)
 data Proof formula rule where
-  PhantomProof :: Int -> Proof formula rule
   ProofLine :: Derivation formula rule -> Proof formula rule
   SubProof :: [Assumption formula] -> [Proof formula rule] -> Derivation formula rule -> Proof formula rule
   deriving (Show, Eq)
 
 pLength :: Proof formula rule -> Int
-pLength (PhantomProof n) = n
 pLength (ProofLine l) = 1
 pLength (SubProof fs ps _) = foldr (\p n -> pLength p + n) (L.length fs + 1) ps
 
 pLookup :: Proof formula rule -> Int -> Either (Assumption formula) (Derivation formula rule)
-pLookup (PhantomProof _) _ = error "Tried (!!) on PhantomProof"
 pLookup (ProofLine d) 0 = Right d
 pLookup (ProofLine _) _ = error "Tried (!!) on ProofLine with n > 0"
 pLookup (SubProof fs _ _) n | n < L.length fs = Left $ fs L.!! n

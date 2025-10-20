@@ -1,0 +1,16 @@
+body {
+  counter-reset: line-counter;
+}
+
+
+.proof-line::before {
+  counter-increment: line-counter;
+  float: left;
+  height: 100%;
+  width: 10px;
+  content: counter(line-counter);
+}
+
+.proof-view {
+  display: grid;
+}

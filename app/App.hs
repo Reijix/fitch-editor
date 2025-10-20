@@ -20,6 +20,8 @@ import Miso
     text,
   )
 import qualified Miso.CSS as CSS
+import qualified Miso.CSS as HP
+import Miso.CSS.Color (red)
 import qualified Miso.Html.Element as H
 import Miso.Html.Event as E (onPointerUp)
 import qualified Miso.Html.Property as HP
@@ -45,7 +47,7 @@ runApp emptyModel = run $ startApp app
     app =
       (component emptyModel updateModel viewModel)
         { subs = [mouseSub HandlePointer],
-          styles = [Href "assets/style.css"],
+          styles = [Href "style.css"],
           events = M.fromList [("pointerdown", False), ("pointerup", False), ("mouseover", False)]
         }
 
@@ -78,7 +80,8 @@ viewModel (Model x y _ prf) =
   H.div_
     [E.onPointerUp PointerUp]
     [ H.p_ [] [text $ ms $ show (round x :: Integer, round y :: Integer)],
-      viewProof 0 (100, 50) prf
+      viewProof 0 (100, 50) prf,
+      H.div_ [HP.style_ [HP.backgroundColor red, HP.maxWidth "100px", HP.minHeight "100px"], HP.draggable_ True] [H.p_ [HP.draggable_ True] ["drag1"], H.p_ [HP.draggable_ True] ["drag2"]]
     ]
 
 -----------------------------------------------------------------------------
