@@ -60,8 +60,8 @@ lineContainer ::
   forall formula rule.
   (Show formula) =>
   (Show rule) =>
-  Model formula rule -> Int -> MisoString -> View (Model formula rule) Action
-lineContainer m n s =
+  Model formula rule -> Bool -> Int -> MisoString -> View (Model formula rule) Action
+lineContainer m isAssumption n s =
   H.div_
     [ HP.draggable_ True,
       HP.classList_ [("proof-line", True), ("draggable", True)],
@@ -70,8 +70,7 @@ lineContainer m n s =
       onDoubleClick (DoubleClick n),
       onFocusOut Blur
     ]
-    [ viewDragIcon,
-      H.input_ [inert_ (n /= (m ^. focusedLine)), HP.id_ . ms $ "proof-line" ++ show n, HP.classList_ [("proof-input", True)], HP.draggable_ False, onDragStartWithOptions preventDefault DragStart, value_ s]
+    [ H.input_ [inert_ (n /= (m ^. focusedLine)), HP.id_ . ms $ "proof-line" ++ show n, HP.classList_ [("proof-input", True), ("assumption", isAssumption)], HP.draggable_ False, onDragStartWithOptions preventDefault DragStart, value_ s]
     ]
 
 viewLine ::
@@ -79,8 +78,8 @@ viewLine ::
   (Show formula) =>
   (Show rule) =>
   Model formula rule -> Int -> Either (Assumption formula) (Derivation formula rule) -> View (Model formula rule) Action
-viewLine m n (Left f) = lineContainer m n $ ms $ show f ++ show n
-viewLine m n (Right (Derivation f r _)) = lineContainer m n $ ms $ show f ++ show r ++ show n
+viewLine m n (Left f) = lineContainer m True n $ ms $ show f ++ show n
+viewLine m n (Right (Derivation f r _)) = lineContainer m False n $ ms $ show f ++ show r ++ show n
 
 viewProof ::
   forall formula rule.
@@ -92,7 +91,7 @@ viewProof m = H.div_ [] [proofView]
     (lineNos, proofView) = _viewProof 0 0 (m ^. proof)
     _viewProof :: Int -> Int -> Proof formula rule -> (Int, View (Model formula rule) Action)
     _viewProof n dy (ProofLine d) = (dy + 1, viewLine m n (Right d))
-    _viewProof n dy (SubProof fs ps d) = (dy + length allLines, H.div_ [HP.class_ "subproof"] allLines)
+    _viewProof n dy (SubProof fs ps d) = (dy + length allLines, H.div_ [HP.class_ "subproof", HP.draggable_ True, onDragStart DragStart, onDragEnd DragEnd] allLines)
       where
         allLines :: [View (Model formula rule) Action]
         allLines = do

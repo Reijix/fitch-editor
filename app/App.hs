@@ -86,8 +86,7 @@ viewModel ::
 viewModel model@(Model x y _ prf) =
   H.div_
     []
-    [ H.p_ [] [text $ ms $ show (round x :: Integer, round y :: Integer)],
-      viewProof model,
+    [ viewProof model,
       viewBin
     ]
 
