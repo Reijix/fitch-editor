@@ -1,5 +1,3 @@
-{-# LANGUAGE CPP #-}
-
 module App (runApp) where
 
 import Control.Monad (when)
@@ -15,10 +13,14 @@ import Miso
     component,
     consoleLog,
     defaultEvents,
+    defaultOptions,
     dragEvents,
+    emptyDecoder,
+    focus,
     io_,
     mouseSub,
     ms,
+    preventDefault,
     run,
     startApp,
     text,
@@ -26,12 +28,14 @@ import Miso
 import qualified Miso.CSS as CSS
 import qualified Miso.CSS as HP
 import Miso.CSS.Color (red)
+import Miso.Effect (Sub)
 import qualified Miso.Html.Element as H
--- import Miso.Html.Event as E (onPointerUp)
+import Miso.Html.Event
 import qualified Miso.Html.Property as HP
 import Miso.Lens (use, (.=))
 import Miso.Svg (text_)
 import Syntax
+import Util
 import Views
 
 -----------------------------------------------------------------------------
@@ -50,38 +54,27 @@ runApp emptyModel = run $ startApp app
     app :: App (Model rule formula) Action
     app =
       (component emptyModel updateModel viewModel)
-        { subs = [mouseSub HandlePointer],
-        #ifndef WASM
-          styles = [Href "style.css"],
-        #endif
-          events = dragEvents -- dragEvents -- M.fromList [("dragenter", False), ("drag", False), ("dragleave", False), ("drop", False), ("drag", False)]
+        { styles = [Href "style.css"],
+          events = M.union dragEvents (M.fromList [("dblclick", False), ("focusout", False)])
         }
 
 -----------------------------------------------------------------------------
-updateModel :: Action -> Effect ROOT (Model rule formula) Action -- TODO is ROOT correct??
--- updateModel (HandlePointer pointer) = this .= client pointer
-updateModel (HandlePointer pointer) =
-  Miso.Lens.use active >>= \a ->
-    when
-      a
-      ( do
-          let (x, y) = client pointer
-          cursorX Miso.Lens..= x
-          cursorY Miso.Lens..= y
-          -- io_ $ do consoleLog "pointer"
-      )
-updateModel (PointerDown n _) = do
-  io_ $ consoleLog $ ms n
-  active Miso.Lens..= True
-updateModel (PointerUp _) = active Miso.Lens..= False
+updateModel :: Action -> Effect ROOT (Model rule formula) Action
 updateModel (Drop Bin) = io_ . consoleLog $ "dropped in bin"
 updateModel (Drop (Line n)) = io_ . consoleLog . ms $ "dropped in line " ++ show n
-updateModel (Drop (Proof _)) = return ()
-updateModel DragEnter = io_ . consoleLog $ "dragenter"
-updateModel DragLeave = io_ . consoleLog $ "dragleave"
+updateModel (Drop (Proof _)) = pure ()
+updateModel DragEnter = pure ()
+updateModel DragLeave = pure ()
 updateModel DragStart = io_ . consoleLog $ "dragstart"
+updateModel DragOver = pure ()
 updateModel DragEnd = io_ . consoleLog $ "dragend"
-updateModel Drag = io_ . consoleLog $ "drag"
+updateModel (DoubleClick n) = do
+  focusedLine .= n
+  io_ . focus . ms $ "proof-line" ++ show n
+-- io_ . select . ms $ "proof-line" ++ show n
+updateModel Blur = do
+  io_ . consoleLog $ "blur"
+  focusedLine .= -1
 
 -----------------------------------------------------------------------------
 viewModel ::
@@ -90,12 +83,12 @@ viewModel ::
   (Show rule) =>
   Model rule formula ->
   View (Model rule formula) Action
-viewModel (Model x y _ prf) =
+viewModel model@(Model x y _ prf) =
   H.div_
     []
     [ H.p_ [] [text $ ms $ show (round x :: Integer, round y :: Integer)],
-      viewProof 0 (100, 50) prf,
-      H.div_ [HP.class_ "bin", onDragEnter DragEnter, onDragOver DragOver, onDrop (Drop Bin), onDragLeave DragLeave] []
+      viewProof model,
+      viewBin
     ]
 
 -----------------------------------------------------------------------------

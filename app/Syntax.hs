@@ -7,7 +7,7 @@ module Syntax
     lLookup,
     Model (..),
     Action (..),
-    active,
+    focusedLine,
     cursorX,
     cursorY,
     proof,
@@ -139,9 +139,8 @@ data DropLocation where
   deriving (Show, Eq)
 
 data Action where
-  PointerDown :: Int -> PointerEvent -> Action
-  PointerUp :: PointerEvent -> Action
-  HandlePointer :: PointerEvent -> Action
+  Blur :: Action
+  DoubleClick :: Int -> Action
   Drop :: DropLocation -> Action
   DragEnter :: Action
   DragLeave :: Action
@@ -156,13 +155,13 @@ data Action where
 data Model formula rule = Model
   { _cursorX :: Double,
     _cursorY :: Double,
-    _active :: Bool,
+    _focusedLine :: Int,
     _proof :: Proof formula rule
   }
   deriving (Eq)
 
-active :: Miso.Lens.Lens (Model formula rule) Bool
-active = Miso.Lens.lens (._active) $ \model a -> model {_active = a}
+focusedLine :: Miso.Lens.Lens (Model formula rule) Int
+focusedLine = Miso.Lens.lens (._focusedLine) $ \model a -> model {_focusedLine = a}
 
 cursorX :: Miso.Lens.Lens (Model formula rule) Double
 cursorX = Miso.Lens.lens (._cursorX) $ \model x -> model {_cursorX = x}
