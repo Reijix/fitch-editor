@@ -6,6 +6,7 @@ import Miso
     MisoString,
     PointerEvent,
     View,
+    defaultOptions,
     emptyDecoder,
     ms,
     onWithOptions,
@@ -23,7 +24,7 @@ import qualified Miso.Svg.Property as SP
 import Syntax
 
 viewDragIcon :: View (Model formula rule) Action
-viewDragIcon = H.img_ [HP.draggable_ False, HP.src_ "draggable.svg", HP.height_ "16"]
+viewDragIcon = H.img_ [HP.draggable_ False, HP.src_ "./draggable.svg", HP.height_ "16"]
 
 -----------------------------------------------------------------------------
 onDrop :: Action -> Attribute Action
@@ -37,6 +38,15 @@ onDragOver f = onWithOptions preventDefault "dragOver" emptyDecoder $ \_ _ -> f
 
 onDragLeave :: action -> Attribute action
 onDragLeave f = onWithOptions preventDefault "dragLeave" emptyDecoder $ \_ _ -> f
+
+onDragStart :: action -> Attribute action
+onDragStart f = onWithOptions defaultOptions "dragStart" emptyDecoder $ \_ _ -> f
+
+onDragEnd :: action -> Attribute action
+onDragEnd f = onWithOptions defaultOptions "dragEnd" emptyDecoder $ \_ _ -> f
+
+onDrag :: action -> Attribute action
+onDrag f = onWithOptions defaultOptions "drag" emptyDecoder $ \_ _ -> f
 
 -- disable text-highlighting during drag and drop. `preventDefault`
 onPD :: (PointerEvent -> Action) -> Attribute Action
@@ -55,7 +65,7 @@ lineContainer ::
   (Show formula) =>
   (Show rule) =>
   MisoString -> View (Model formula rule) Action
-lineContainer s = H.div_ [HP.draggable_ True, HP.class_ "proof-line"] [viewDragIcon, H.input_ [value_ s]]
+lineContainer s = H.div_ [HP.draggable_ True, HP.class_ "proof-line", onDragStart DragStart, onDragEnd DragEnd] [viewDragIcon, H.input_ [value_ s]]
 
 viewLine ::
   forall formula rule.
@@ -70,18 +80,18 @@ viewProof ::
   (Show formula) =>
   (Show rule) =>
   Int -> (Int, Int) -> Proof formula rule -> View (Model formula rule) Action
-viewProof n (x, y) p = H.div_ [] lines
+viewProof n (x, y) p = H.div_ [] [proofView]
   where
-    (lineNos, lines) = _viewProof n 0 p
-    _viewProof :: Int -> Int -> Proof formula rule -> (Int, [View (Model formula rule) Action])
-    _viewProof n dy (ProofLine d) = (dy + 1, [viewLine n (Right d)])
-    _viewProof n dy (SubProof fs ps d) = (dy + length allLines, allLines)
+    (lineNos, proofView) = _viewProof n 0 p
+    _viewProof :: Int -> Int -> Proof formula rule -> (Int, View (Model formula rule) Action)
+    _viewProof n dy (ProofLine d) = (dy + 1, viewLine n (Right d))
+    _viewProof n dy (SubProof fs ps d) = (dy + length allLines, H.div_ [HP.class_ "subproof"] allLines)
       where
         allLines :: [View (Model formula rule) Action]
         allLines = do
           let (acc', fs') = L.mapAccumL (\acc f -> (acc + 1, viewLine (n + acc) (Left f))) 0 fs
           let (acc'', ps') = L.mapAccumL (\acc p -> _viewProof (n + acc) (dy + acc) p) acc' ps
-          fs' ++ concat ps' ++ [viewLine (n + acc'') (Right d)]
+          fs' ++ ps' ++ [viewLine (n + acc'') (Right d)]
 
 -----------------------------------------------------------------------------
 toEm :: Int -> MisoString

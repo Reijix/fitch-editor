@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module App (runApp) where
 
 import Control.Monad (when)
@@ -12,6 +14,8 @@ import Miso
     View,
     component,
     consoleLog,
+    defaultEvents,
+    dragEvents,
     io_,
     mouseSub,
     ms,
@@ -23,7 +27,7 @@ import qualified Miso.CSS as CSS
 import qualified Miso.CSS as HP
 import Miso.CSS.Color (red)
 import qualified Miso.Html.Element as H
-import Miso.Html.Event as E (onPointerUp)
+-- import Miso.Html.Event as E (onPointerUp)
 import qualified Miso.Html.Property as HP
 import Miso.Lens (use, (.=))
 import Miso.Svg (text_)
@@ -47,8 +51,10 @@ runApp emptyModel = run $ startApp app
     app =
       (component emptyModel updateModel viewModel)
         { subs = [mouseSub HandlePointer],
+        #ifndef WASM
           styles = [Href "style.css"],
-          events = M.fromList [("pointerdown", False), ("pointerup", False), ("mouseover", False)]
+        #endif
+          events = dragEvents -- dragEvents -- M.fromList [("dragenter", False), ("drag", False), ("dragleave", False), ("drop", False), ("drag", False)]
         }
 
 -----------------------------------------------------------------------------
@@ -68,6 +74,14 @@ updateModel (PointerDown n _) = do
   io_ $ consoleLog $ ms n
   active Miso.Lens..= True
 updateModel (PointerUp _) = active Miso.Lens..= False
+updateModel (Drop Bin) = io_ . consoleLog $ "dropped in bin"
+updateModel (Drop (Line n)) = io_ . consoleLog . ms $ "dropped in line " ++ show n
+updateModel (Drop (Proof _)) = return ()
+updateModel DragEnter = io_ . consoleLog $ "dragenter"
+updateModel DragLeave = io_ . consoleLog $ "dragleave"
+updateModel DragStart = io_ . consoleLog $ "dragstart"
+updateModel DragEnd = io_ . consoleLog $ "dragend"
+updateModel Drag = io_ . consoleLog $ "drag"
 
 -----------------------------------------------------------------------------
 viewModel ::
@@ -78,10 +92,10 @@ viewModel ::
   View (Model rule formula) Action
 viewModel (Model x y _ prf) =
   H.div_
-    [E.onPointerUp PointerUp]
+    []
     [ H.p_ [] [text $ ms $ show (round x :: Integer, round y :: Integer)],
       viewProof 0 (100, 50) prf,
-      H.div_ [HP.style_ [HP.backgroundColor red, HP.maxWidth "100px", HP.minHeight "100px"], HP.draggable_ True] [H.p_ [HP.draggable_ True] ["drag1"], H.p_ [HP.draggable_ True] ["drag2"]]
+      H.div_ [HP.class_ "bin", onDragEnter DragEnter, onDragOver DragOver, onDrop (Drop Bin), onDragLeave DragLeave] []
     ]
 
 -----------------------------------------------------------------------------

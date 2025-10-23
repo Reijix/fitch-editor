@@ -4,7 +4,9 @@ import App
 import Syntax
 
 -----------------------------------------------------------------------------
-
+#ifdef WASM
+foreign export javascript "hs_start" main :: IO ()
+#endif
 -----------------------------------------------------------------------------
 main :: IO ()
 main = runApp emptyModel
@@ -19,6 +21,11 @@ emptyModel :: (Model Formula Rule)
 emptyModel = Model {_cursorX = 50, _cursorY = 52, _active = False, _proof = exProof}
 
 exProof :: (Proof Formula Rule)
-exProof = SubProof [Formula, Formula] [ProofLine $ Derivation Formula Rule []] (Derivation Formula Rule [])
+exProof =
+  SubProof
+    [Formula, Formula]
+    [ SubProof [Formula] [ProofLine (Derivation Formula Rule [])] (Derivation Formula Rule [])
+    ]
+    (Derivation Formula Rule [])
 
 -----------------------------------------------------------------------------
