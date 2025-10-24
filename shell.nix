@@ -1,6 +1,7 @@
 { system ? builtins.currentSystem, pkgs ? import <nixpkgs> { } }:
 with pkgs;
 mkShell {
+  name = "hls";
   buildInputs = let
     hls = haskell-language-server.override { supportedGhcVersions = [ "9122" ]; };
     # Hack to get cabal-install 3.14 instead of 3.16 which is not compatible with hls yet.

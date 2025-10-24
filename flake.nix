@@ -8,14 +8,15 @@
 
   outputs = {miso, self, nixpkgs, flake-utils }:
       flake-utils.lib.eachDefaultSystem (system: {
-      # devShell = inputs.miso.outputs.devShells.${system}.default;
       devShells.default = let 
         pkgs = nixpkgs.legacyPackages.${system}; 
       in import ./shell.nix { inherit pkgs system; };
-      devShells.wasm = miso.outputs.devShells.${system}.wasm;
-      devShells.ghcjs = miso.outputs.devShells.${system}.ghcjs;
-      devShells.hls = miso.outputs.devShells.${system}.hls;
+      devShells.wasm = miso.outputs.devShells.${system}.wasm.overrideAttrs {
+        name = "wasm";
+      };
+      devShells.ghcjs = miso.outputs.devShells.${system}.ghcjs.overrideAttrs {
+        name = "ghcjs";
+      };
     });
-
 }
 
