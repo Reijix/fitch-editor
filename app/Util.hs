@@ -1,10 +1,8 @@
 module Util where
 
-import Control.Concurrent
-import Control.Monad.IO.Class
-import Language.Javascript.JSaddle hiding (obj, val)
-import Miso
-import Miso.String
+import Control.Monad.State
+import Data.Maybe
+import Miso.Lens
 
-select :: MisoString -> JSM ()
-select a = () <$ jsg1 "callSelect" a
+(%=?) :: (MonadState record m) => Lens record field -> (field -> Maybe field) -> m ()
+(%=?) _lens f = _lens %= (\x -> fromMaybe x (f x))

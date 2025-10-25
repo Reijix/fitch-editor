@@ -56,7 +56,6 @@ executable app
   build-depends:
     base <5,
     containers >=0.7,
-    jsaddle,
     miso,
     mtl,
 

@@ -1,19 +1,4 @@
-module Syntax
-  ( RuleSpec (..),
-    Proof (..),
-    Assumption,
-    Derivation (..),
-    lLength,
-    lLookup,
-    Model (..),
-    Action (..),
-    focusedLine,
-    cursorX,
-    cursorY,
-    proof,
-    DropLocation (..),
-  )
-where
+module Syntax where
 
 import qualified Data.List as L
 import Miso
@@ -111,6 +96,7 @@ lRemove n p@(SubProof fs ps l) =
         )
         (\p' -> Just $ p' : ps)
         (lRemove n p)
+    tryRemove _ _ = Nothing
 
 lInsert :: Either (Assumption formula) (Derivation formula rule) -> Int -> Proof formula rule -> Maybe (Proof formula rule)
 lInsert (Left _) n (ProofLine _) = Nothing
@@ -133,9 +119,15 @@ lInsert (Right d) n (SubProof fs (p : ps) l) =
 
 -----------------------------------------------------------------------------
 data DropLocation where
-  Line :: Int -> DropLocation
-  Proof :: Int -> DropLocation
-  Bin :: DropLocation
+  LocationLine :: Int -> DropLocation
+  LocationProof :: Int -> DropLocation
+  LocationBin :: DropLocation
+  deriving (Show, Eq)
+
+data DragTarget where
+  TargetProof :: Int -> DragTarget
+  TargetLine :: Int -> DragTarget
+  TargetNone :: DragTarget
   deriving (Show, Eq)
 
 data Action where
@@ -145,29 +137,34 @@ data Action where
   DragEnter :: Action
   DragLeave :: Action
   DragOver :: Action
-  DragStart :: Action
+  DragStart :: DragTarget -> Action
   DragEnd :: Action
   Drag :: Action
   deriving (Show, Eq)
 
 -----------------------------------------------------------------------------
 -- actually, just keep track of current element, this can be an either (proof, line or formula) and then insert a phantom object into the proof tree.
+
 data Model formula rule = Model
   { _cursorX :: Double,
     _cursorY :: Double,
     _focusedLine :: Int,
-    _proof :: Proof formula rule
+    _proof :: Proof formula rule,
+    _dragTarget :: DragTarget
   }
-  deriving (Eq)
+  deriving (Show, Eq)
 
-focusedLine :: Miso.Lens.Lens (Model formula rule) Int
-focusedLine = Miso.Lens.lens (._focusedLine) $ \model a -> model {_focusedLine = a}
+focusedLine :: Lens (Model formula rule) Int
+focusedLine = lens (._focusedLine) $ \model a -> model {_focusedLine = a}
 
-cursorX :: Miso.Lens.Lens (Model formula rule) Double
-cursorX = Miso.Lens.lens (._cursorX) $ \model x -> model {_cursorX = x}
+cursorX :: Lens (Model formula rule) Double
+cursorX = lens (._cursorX) $ \model x -> model {_cursorX = x}
 
-cursorY :: Miso.Lens.Lens (Model formula rule) Double
-cursorY = Miso.Lens.lens (._cursorY) $ \model y -> model {_cursorY = y}
+cursorY :: Lens (Model formula rule) Double
+cursorY = lens (._cursorY) $ \model y -> model {_cursorY = y}
 
-proof :: Miso.Lens.Lens (Model formula rule) (Proof formula rule)
-proof = Miso.Lens.lens (._proof) $ \model p -> model {_proof = p}
+proof :: Lens (Model formula rule) (Proof formula rule)
+proof = lens (._proof) $ \model p -> model {_proof = p}
+
+dragTarget :: Lens (Model formula rule) DragTarget
+dragTarget = lens (._dragTarget) $ \model dt -> model {_dragTarget = dt}

@@ -32,7 +32,7 @@ import Miso.Effect (Sub)
 import qualified Miso.Html.Element as H
 import Miso.Html.Event
 import qualified Miso.Html.Property as HP
-import Miso.Lens (use, (.=))
+import Miso.Lens (use, (%=), (.=))
 import Miso.Svg (text_)
 import Syntax
 import Util
@@ -60,12 +60,24 @@ runApp emptyModel = run $ startApp app
 
 -----------------------------------------------------------------------------
 updateModel :: Action -> Effect ROOT (Model rule formula) Action
-updateModel (Drop Bin) = io_ . consoleLog $ "dropped in bin"
-updateModel (Drop (Line n)) = io_ . consoleLog . ms $ "dropped in line " ++ show n
-updateModel (Drop (Proof _)) = pure ()
+updateModel (Drop LocationBin) = do
+  dt <- use dragTarget
+  case dt of
+    TargetProof n -> pure ()
+    TargetLine n -> proof %=? lRemove n
+    TargetNone -> pure ()
+  io_ . consoleLog $ "dropped in bin"
+updateModel (Drop (LocationLine n)) = do
+  io_ . consoleLog . ms $ "dropped in line " ++ show n
+updateModel (Drop (LocationProof _)) = pure ()
 updateModel DragEnter = pure ()
 updateModel DragLeave = pure ()
-updateModel DragStart = io_ . consoleLog $ "dragstart"
+updateModel (DragStart dt) = do
+  dragTarget .= dt
+  case dt of
+    TargetNone -> io_ . consoleLog $ "dragstartNone"
+    TargetLine n -> io_ . consoleLog . ms $ "dragstartLine" ++ show n
+    TargetProof n -> io_ . consoleLog . ms $ "dragstartProof" ++ show n
 updateModel DragOver = pure ()
 updateModel DragEnd = io_ . consoleLog $ "dragend"
 updateModel (DoubleClick n) = do
@@ -83,7 +95,7 @@ viewModel ::
   (Show rule) =>
   Model rule formula ->
   View (Model rule formula) Action
-viewModel model@(Model x y _ prf) =
+viewModel model =
   H.div_
     []
     [ viewProof model,

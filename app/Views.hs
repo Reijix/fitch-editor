@@ -4,6 +4,7 @@ import qualified Data.List as L
 import Miso
   ( Attribute,
     MisoString,
+    Options (..),
     PointerEvent,
     View,
     defaultOptions,
@@ -50,7 +51,7 @@ viewBin =
     [ onDragOverWithOptions preventDefault DragOver,
       onDragEnterWithOptions preventDefault DragEnter,
       onDragLeaveWithOptions preventDefault DragLeave,
-      onDropWithOptions defaultOptions (Drop Bin),
+      onDropWithOptions defaultOptions (Drop LocationBin),
       HP.class_ "bin"
     ]
     []
@@ -65,12 +66,19 @@ lineContainer m isAssumption n s =
   H.div_
     [ HP.draggable_ True,
       HP.classList_ [("proof-line", True), ("draggable", True)],
-      onDragStart DragStart,
+      onDragStartWithOptions (Options {_preventDefault = False, _stopPropagation = True}) . DragStart $ TargetLine n,
       onDragEnd DragEnd,
       onDoubleClick (DoubleClick n),
       onFocusOut Blur
     ]
-    [ H.input_ [inert_ (n /= (m ^. focusedLine)), HP.id_ . ms $ "proof-line" ++ show n, HP.classList_ [("proof-input", True), ("assumption", isAssumption)], HP.draggable_ False, onDragStartWithOptions preventDefault DragStart, value_ s]
+    [ H.input_
+        [ inert_ (n /= (m ^. focusedLine)),
+          HP.id_ . ms $ "proof-line" ++ show n,
+          HP.classList_ [("proof-input", True), ("assumption", isAssumption)],
+          HP.draggable_ False,
+          -- onDragStartWithOptions preventDefault DragStart,
+          value_ s
+        ]
     ]
 
 viewLine ::
@@ -91,7 +99,7 @@ viewProof m = H.div_ [] [proofView]
     (lineNos, proofView) = _viewProof 0 0 (m ^. proof)
     _viewProof :: Int -> Int -> Proof formula rule -> (Int, View (Model formula rule) Action)
     _viewProof n dy (ProofLine d) = (dy + 1, viewLine m n (Right d))
-    _viewProof n dy (SubProof fs ps d) = (dy + length allLines, H.div_ [HP.class_ "subproof", HP.draggable_ True, onDragStart DragStart, onDragEnd DragEnd] allLines)
+    _viewProof n dy (SubProof fs ps d) = (dy + length allLines, H.div_ [HP.class_ "subproof", HP.draggable_ True, onDragStart . DragStart $ TargetProof 0, onDragEnd DragEnd] allLines)
       where
         allLines :: [View (Model formula rule) Action]
         allLines = do
